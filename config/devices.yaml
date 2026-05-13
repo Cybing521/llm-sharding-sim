@@ -1,3 +1,4 @@
+# TODO 增加设备数和修改对应的显存
 devices:
   - name: "jetson_nano_0"
     memory_mb: 3072

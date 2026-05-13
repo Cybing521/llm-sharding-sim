@@ -275,7 +275,7 @@ def main():
     os.makedirs(results_dir, exist_ok=True)
 
     print("Loading configurations...")
-    model = ModelConfig.from_yaml(os.path.join(config_dir, "model.yaml"))
+    model = ModelConfig.from_yaml(os.path.join(config_dir, "model.yaml"))  # TODO 这里的几个参数文件需要修改值
     cluster = DeviceCluster.from_yaml(os.path.join(config_dir, "devices.yaml"))
     requests = load_requests(os.path.join(config_dir, "requests.yaml"))
 
