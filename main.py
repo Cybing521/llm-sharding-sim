@@ -13,6 +13,9 @@ import sys
 import time
 import copy
 
+import matplotlib
+matplotlib.use("Agg")  # 将 Matplotlib 后端切到 Agg (非 GUI 的图片渲染后端，适合服务器、CI、远程终端、无显示器环境，在 plt.savefig(...) 时只生成 PNG 等文件，不弹出窗口)
+import matplotlib.pyplot as plt
 import numpy as np
 
 from simulator.model import ModelConfig
@@ -258,13 +261,6 @@ def run_experiment_4(model, cluster, requests, results_dir):
 
 
 def main():
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-
-    # Make plt available for exp4
-    globals()["plt"] = plt
-
     parser = argparse.ArgumentParser(description="LLM Sharding Simulator")
     parser.add_argument("--experiment", type=int, default=0,
                         help="Run specific experiment (1-4), 0 for all")
