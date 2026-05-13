@@ -1,0 +1,26 @@
+name: "LLaMA-3.2-3B"
+precision: "fp16"
+bytes_per_param: 2
+
+hidden_size: 3072
+num_attention_heads: 24
+num_kv_heads: 8
+head_dim: 128
+
+layers:
+  embedding:
+    index: 0
+    size_mb: 751
+  transformer:
+    count: 28
+    index_start: 1
+    index_end: 28
+    size_per_layer_mb: 192
+  lm_head:
+    index: 29
+    size_mb: 751
+
+kv_cache:
+  bytes_per_layer_per_token: 4096   # 2 * num_kv_heads * head_dim * bytes_per_param = 2*8*128*2
+
+activation_size_bytes: 6144         # hidden_size * bytes_per_param = 3072*2

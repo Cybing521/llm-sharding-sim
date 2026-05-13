@@ -1,0 +1,43 @@
+devices:
+  - name: "jetson_nano_0"
+    memory_mb: 3072
+    compute_capability_gflops: 472
+    tokens_per_second_per_layer: 15.0
+
+  - name: "jetson_nano_1"
+    memory_mb: 3072
+    compute_capability_gflops: 472
+    tokens_per_second_per_layer: 15.0
+
+  - name: "jetson_nano_2"
+    memory_mb: 3072
+    compute_capability_gflops: 472
+    tokens_per_second_per_layer: 15.0
+
+  - name: "jetson_xavier_0"
+    memory_mb: 6144
+    compute_capability_gflops: 6300
+    tokens_per_second_per_layer: 200.0
+
+  - name: "jetson_xavier_1"
+    memory_mb: 6144
+    compute_capability_gflops: 6300
+    tokens_per_second_per_layer: 200.0
+
+# Bandwidth matrix (MB/s) between device pairs.
+# b[i][j] = bandwidth from device i to device j.
+# Diagonal (same device) is treated as infinite (no transfer cost).
+bandwidth_mbps:
+  - [0,    12.5, 12.5, 12.5, 12.5]
+  - [12.5, 0,    12.5, 12.5, 12.5]
+  - [12.5, 12.5, 0,    12.5, 12.5]
+  - [12.5, 12.5, 12.5, 0,    25.0]
+  - [12.5, 12.5, 12.5, 25.0, 0   ]
+
+# Latency (ms) per hop between devices (optional, added to each transfer)
+latency_ms:
+  - [0,   2, 2, 2, 2]
+  - [2,   0, 2, 2, 2]
+  - [2,   2, 0, 2, 2]
+  - [2,   2, 2, 0, 1]
+  - [2,   2, 2, 1, 0]
