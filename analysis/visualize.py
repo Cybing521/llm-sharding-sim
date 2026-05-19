@@ -1,4 +1,4 @@
-"""Visualization: memory timelines, delay comparison, layer heatmap."""
+"""可视化工具：内存时间线、延迟对比、层分配热力图。"""
 
 import os
 import numpy as np
@@ -14,7 +14,7 @@ from simulator.device import DeviceCluster
 def plot_memory_timeline(snapshots: list, cluster: DeviceCluster,
                          title: str = "Device Memory Usage Over Time",
                          save_path: str = "results/memory_timeline.png"):
-    """Plot memory usage per device over simulation time."""
+    """绘制仿真过程中各设备的内存使用随时间变化的曲线。"""
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     times = [s.time for s in snapshots]
     K = cluster.num_devices
@@ -48,10 +48,10 @@ def plot_memory_timeline(snapshots: list, cluster: DeviceCluster,
 
 def plot_delay_comparison(results_by_solver: dict,
                           save_path: str = "results/delay_comparison.png"):
-    """Bar chart comparing total delay across solvers.
+    """绘制各求解器总延迟对比的柱状图。
 
-    Args:
-        results_by_solver: {solver_name: [{"request_id": ..., "t_total": ...}, ...]}
+    参数：
+        results_by_solver: {求解器名称: [{"request_id": ..., "t_total": ...}, ...]}
     """
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     solver_names = list(results_by_solver.keys())
@@ -86,7 +86,7 @@ def plot_layer_assignment_heatmap(x: np.ndarray, model: ModelConfig,
                                   cluster: DeviceCluster,
                                   solver_name: str = "",
                                   save_path: str = "results/layer_heatmap.png"):
-    """Heatmap showing which layers are on which devices."""
+    """绘制层分配热力图，展示哪些层放置在哪些设备上。"""
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     U, K = x.shape
 
@@ -128,7 +128,7 @@ def plot_layer_assignment_heatmap(x: np.ndarray, model: ModelConfig,
 
 def plot_prompt_length_sweep(results: dict,
                              save_path: str = "results/prompt_sweep.png"):
-    """Line plot: delay vs prompt length for each solver."""
+    """折线图：各求解器的延迟随 prompt 长度的变化趋势。"""
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
     fig, ax = plt.subplots(figsize=(10, 6))

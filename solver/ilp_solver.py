@@ -1,19 +1,19 @@
-"""ILP solver using PuLP, matching the Notion formulation exactly.
+"""使用 PuLP 的整数线性规划（ILP）求解器，严格对应 Notion 中的数学建模。
 
-Decision variables:
-    x[u,k]      -- binary: layer u placed on device k
-    z[q,u,k]    -- binary: request q uses device k for layer u
-    y[q,u,k,k'] -- auxiliary: linearizes the product z[q,u,k] * z[q,u+1,k']
+决策变量：
+    x[u,k]      -- 二值变量：层 u 是否放置在设备 k 上
+    z[q,u,k]    -- 二值变量：请求 q 在层 u 是否使用设备 k
+    y[q,u,k,k'] -- 辅助变量：线性化 z[q,u,k] * z[q,u+1,k'] 的乘积
 
-Objective:
+目标函数：
     min  sum_q  t_delay(r_q)
     t_delay = t_prc + t_dec + t_trans
 
-Constraints:
-    1. Memory:   sum_u  x[u,k] * size(l_u) <= h_k          for all k
-    2. Unique:   sum_k  z[q,u,k] = 1                        for all q, u
-    3. Placement: z[q,u,k] <= x[u,k]                        for all q, u, k
-    4. Linearization of y = z[q,u,k] * z[q,u+1,k']:
+约束条件：
+    1. 内存约束：   sum_u  x[u,k] * size(l_u) <= h_k          对所有 k
+    2. 唯一路由：   sum_k  z[q,u,k] = 1                        对所有 q, u
+    3. 路由需满足放置：z[q,u,k] <= x[u,k]                      对所有 q, u, k
+    4. 线性化约束 y = z[q,u,k] * z[q,u+1,k']：
        y >= z[q,u,k] + z[q,u+1,k'] - 1
        y <= z[q,u,k]
        y <= z[q,u+1,k']
@@ -44,7 +44,7 @@ class ILPSolver(BaseSolver):
 
         prob = pulp.LpProblem("LLM_Sharding", pulp.LpMinimize)
 
-        # --- Decision variables ---
+        # --- 决策变量 ---
         x = {}
         for u in range(U):
             for k in range(K):
@@ -56,7 +56,7 @@ class ILPSolver(BaseSolver):
                 for k in range(K):
                     z[q, u, k] = pulp.LpVariable(f"z_{q}_{u}_{k}", cat="Binary")
 
-        # Auxiliary variables for linearizing z[q,u,k] * z[q,u+1,k']
+        # 辅助变量，用于线性化 z[q,u,k] * z[q,u+1,k']
         y = {}
         for q in range(Q):
             for u in range(U - 1):
@@ -68,7 +68,7 @@ class ILPSolver(BaseSolver):
                             f"y_{q}_{u}_{k}_{kp}", lowBound=0, upBound=1, cat="Binary"
                         )
 
-        # --- Objective function ---
+        # --- 目标函数 ---
         obj = pulp.LpAffineExpression()
 
         for q in range(Q):
@@ -76,20 +76,20 @@ class ILPSolver(BaseSolver):
             g_q = requests[q].output_length
             a = self.model.activation_size_bytes
 
-            # t_prc: prefill
+            # t_prc：预填充时间
             for u in range(U):
                 for k in range(K):
                     c_k = self.cluster.devices[k].tokens_per_second_per_layer
                     obj += z[q, u, k] * (r_q / c_k)
 
-            # t_dec: decode (skip embedding u=0)
+            # t_dec：解码时间（跳过 embedding 层 u=0）
             if g_q > 1:
                 for u in range(1, U):
                     for k in range(K):
                         c_k = self.cluster.devices[k].tokens_per_second_per_layer
                         obj += z[q, u, k] * ((g_q - 1) / c_k)
 
-            # t_trans: transmission between different devices
+            # t_trans：不同设备间的传输时间
             for u in range(U - 1):
                 for k in range(K):
                     for kp in range(K):
@@ -106,9 +106,9 @@ class ILPSolver(BaseSolver):
 
         prob += obj, "total_delay"
 
-        # --- Constraints ---
+        # --- 约束条件 ---
 
-        # 1. Memory constraint
+        # 1. 内存约束
         for k in range(K):
             prob += (
                 pulp.lpSum(x[u, k] * self.model.layer_size_mb(u) for u in range(U))
@@ -116,14 +116,14 @@ class ILPSolver(BaseSolver):
                 f"memory_{k}"
             )
 
-        # 2. Each layer must be placed on at least one device
+        # 2. 每层必须放置在至少一个设备上
         for u in range(U):
             prob += (
                 pulp.lpSum(x[u, k] for k in range(K)) >= 1,
                 f"layer_placed_{u}"
             )
 
-        # 3. Unique routing: each request uses exactly one device per layer
+        # 3. 唯一路由：每个请求在每层上恰好使用一个设备
         for q in range(Q):
             for u in range(U):
                 prob += (
@@ -131,7 +131,7 @@ class ILPSolver(BaseSolver):
                     f"unique_{q}_{u}"
                 )
 
-        # 4. Routing respects placement
+        # 4. 路由必须遵循放置方案
         for q in range(Q):
             for u in range(U):
                 for k in range(K):
@@ -140,7 +140,7 @@ class ILPSolver(BaseSolver):
                         f"route_place_{q}_{u}_{k}"
                     )
 
-        # 5. Linearization: y[q,u,k,k'] = z[q,u,k] * z[q,u+1,k']
+        # 5. 线性化约束：y[q,u,k,k'] = z[q,u,k] * z[q,u+1,k']
         for q in range(Q):
             for u in range(U - 1):
                 for k in range(K):
@@ -160,7 +160,7 @@ class ILPSolver(BaseSolver):
                             f"lin_ub2_{q}_{u}_{k}_{kp}"
                         )
 
-        # --- Solve ---
+        # --- 求解 ---
         solver = pulp.PULP_CBC_CMD(msg=1, timeLimit=self.time_limit)
         prob.solve(solver)
 
@@ -172,7 +172,7 @@ class ILPSolver(BaseSolver):
         }
         status = status_map.get(prob.status, "unknown")
 
-        # Extract solution
+        # 提取求解结果
         x_arr = np.zeros((U, K), dtype=int)
         z_arr = np.zeros((Q, U, K), dtype=int)
 

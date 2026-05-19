@@ -1,11 +1,11 @@
-"""Cost functions: t_prc, t_dec, t_trans for a given layer assignment.
+"""代价函数：计算给定层分配方案下的 t_prc（预填充）、t_dec（解码）、t_trans（传输）。
 
-Given:
-  x[u][k]    = 1 if layer u is placed on device k
-  z[q][u][k] = 1 if request q uses device k for layer u
-  model, cluster, requests  -- config objects
+给定：
+  x[u][k]    = 1 表示层 u 被放置在设备 k 上
+  z[q][u][k] = 1 表示请求 q 在层 u 使用设备 k
+  model, cluster, requests -- 配置对象
 
-Compute total delay per request and aggregate cost.
+计算每个请求的延迟及总代价。
 """
 
 import numpy as np
@@ -15,24 +15,23 @@ from simulator.request import Request
 
 
 def compute_request_delay(
-    z_q: np.ndarray,           # [U, K] binary assignment for one request
+    z_q: np.ndarray,           # [U, K] 单请求的二值分配矩阵
     model: ModelConfig,
     cluster: DeviceCluster,
     request: Request,
 ) -> dict:
-    """Compute t_prc, t_dec, t_trans for a single request.
+    """计算单个请求的 t_prc（预填充时间）、t_dec（解码时间）、t_trans（传输时间）。
 
-    Args:
-        z_q: shape [num_layers, num_devices], z_q[u][k] = 1 if request uses
-             device k for layer u.
-    Returns:
-        dict with t_prc, t_dec, t_trans, t_total (all in seconds).
+    参数：
+        z_q: 形状 [num_layers, num_devices]，z_q[u][k] = 1 表示请求在层 u 使用设备 k。
+    返回：
+        包含 t_prc、t_dec、t_trans、t_total 的字典（单位：秒）。
     """
     U, K = z_q.shape
     r_q = request.prompt_length
     g_q = request.output_length
 
-    # t_prc: prefill -- all layers process |r_q| tokens
+    # t_prc：预填充阶段——所有层处理 |r_q| 个 token
     t_prc = 0.0
     for u in range(U):
         for k in range(K):
@@ -40,8 +39,8 @@ def compute_request_delay(
                 c_k = cluster.devices[k].tokens_per_second_per_layer
                 t_prc += r_q / c_k
 
-    # t_dec: decode -- (g_q - 1) steps, each layer processes 1 token
-    # Skip embedding layer (u=0) in decode since it's just a lookup
+    # t_dec：解码阶段——(g_q - 1) 步，每层每步处理 1 个 token
+    # 解码时跳过 embedding 层（u=0），因为它只是查表操作
     t_dec = 0.0
     if g_q > 1:
         for u in range(1, U):
@@ -50,7 +49,7 @@ def compute_request_delay(
                     c_k = cluster.devices[k].tokens_per_second_per_layer
                     t_dec += (g_q - 1) * (1.0 / c_k)
 
-    # t_trans: transmission when consecutive layers are on different devices
+    # t_trans：相邻层在不同设备上时产生的传输时间
     a = model.activation_size_bytes
     t_trans = 0.0
     for u in range(U - 1):
@@ -58,9 +57,9 @@ def compute_request_delay(
         dev_u1 = int(np.argmax(z_q[u + 1]))
         if dev_u != dev_u1:
             per_hop = cluster.transfer_time_s(dev_u, dev_u1, a)
-            # Prefill: transfer hidden states of |r_q| tokens once
-            # Decode: transfer 1 token's hidden state (g_q - 1) times
-            # Simplified: g_q total hops (prefill counted as 1 batch transfer + decode steps)
+            # 预填充：一次性传输 |r_q| 个 token 的隐藏状态
+            # 解码：每步传输 1 个 token 的隐藏状态，共 (g_q - 1) 次
+            # 简化处理：共 g_q 次跳转（预填充视为 1 次批量传输 + 解码步骤）
             t_trans += g_q * per_hop
 
     return {
@@ -72,16 +71,16 @@ def compute_request_delay(
 
 
 def compute_total_cost(
-    x: np.ndarray,             # [U, K] placement
-    z: np.ndarray,             # [Q, U, K] routing
+    x: np.ndarray,             # [U, K] 层放置矩阵
+    z: np.ndarray,             # [Q, U, K] 路由矩阵
     model: ModelConfig,
     cluster: DeviceCluster,
     requests: list[Request],
 ) -> dict:
-    """Compute total cost across all requests.
+    """计算所有请求的总代价。
 
-    Returns:
-        dict with per_request list and aggregate total_delay.
+    返回：
+        包含各请求延迟列表和汇总总延迟的字典。
     """
     per_request = []
     total_delay = 0.0
@@ -102,7 +101,7 @@ def check_memory_feasibility(
     model: ModelConfig,
     cluster: DeviceCluster,
 ) -> list[dict]:
-    """Check if placement x satisfies memory constraints (static only)."""
+    """检查层放置方案 x 是否满足内存约束（仅静态权重部分）。"""
     U, K = x.shape
     results = []
     for k in range(K):

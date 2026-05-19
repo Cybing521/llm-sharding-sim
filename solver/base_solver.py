@@ -1,4 +1,4 @@
-"""Base solver interface for layer placement."""
+"""层放置求解器的基类接口。"""
 
 from abc import ABC, abstractmethod
 import numpy as np
@@ -11,12 +11,12 @@ class SolverResult:
     def __init__(self, x: np.ndarray, z: np.ndarray, solver_name: str,
                  status: str = "optimal", solve_time: float = 0.0):
         """
-        Args:
-            x: [U, K] binary placement matrix
-            z: [Q, U, K] binary routing matrix
-            solver_name: name of the solver used
-            status: "optimal", "feasible", "infeasible"
-            solve_time: time taken to solve (seconds)
+        参数：
+            x: [U, K] 二值层放置矩阵
+            z: [Q, U, K] 二值路由矩阵
+            solver_name: 使用的求解器名称
+            status: 求解状态，"optimal"、"feasible"、"infeasible"
+            solve_time: 求解耗时（秒）
         """
         self.x = x
         self.z = z
@@ -25,7 +25,7 @@ class SolverResult:
         self.solve_time = solve_time
 
     def layer_assignment(self) -> dict[int, list[int]]:
-        """Return {device_index: [layer_indices]} mapping."""
+        """返回 {设备索引: [层索引列表]} 的映射。"""
         U, K = self.x.shape
         assignment = {k: [] for k in range(K)}
         for u in range(U):

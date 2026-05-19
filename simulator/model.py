@@ -1,4 +1,4 @@
-"""LLM model parameters: layers, sizes, KV cache growth."""
+"""LLM 模型参数定义：层结构、权重大小、KV Cache 增长。"""
 
 from dataclasses import dataclass, field
 import yaml
@@ -8,7 +8,7 @@ import yaml
 class LayerInfo:
     index: int
     size_mb: float
-    layer_type: str  # "embedding", "transformer", "lm_head"
+    layer_type: str  # 层类型："embedding"、"transformer"、"lm_head"
 
 
 @dataclass
@@ -35,7 +35,7 @@ class ModelConfig:
         return self.layers[index].size_mb
 
     def kv_cache_mb_per_token(self, num_layers_on_device: int) -> float:
-        """KV cache memory growth per token for a given number of layers."""
+        """给定设备上层数，计算每个 token 的 KV Cache 内存增长量（MB）。"""
         return (self.kv_cache_bytes_per_layer_per_token * num_layers_on_device) / (1024 * 1024)
 
     @classmethod

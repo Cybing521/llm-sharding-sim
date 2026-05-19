@@ -1,4 +1,4 @@
-"""Strategy comparison utilities."""
+"""策略对比工具函数。"""
 
 from simulator.model import ModelConfig
 from simulator.device import DeviceCluster
@@ -11,7 +11,7 @@ def compare_solvers(results: list[SolverResult],
                     model: ModelConfig,
                     cluster: DeviceCluster,
                     requests: list[Request]) -> str:
-    """Generate a text comparison report of multiple solver results."""
+    """生成多个求解器结果的文本对比报告。"""
     lines = []
     lines.append("=" * 70)
     lines.append("SOLVER COMPARISON REPORT")

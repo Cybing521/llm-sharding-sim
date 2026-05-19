@@ -1,4 +1,4 @@
-"""Edge device model: memory tracking, layer placement, KV cache."""
+"""边缘设备模型：内存追踪、层放置、KV Cache 管理。"""
 
 from dataclasses import dataclass, field
 import yaml
@@ -56,7 +56,7 @@ class DeviceCluster:
         return len(self.devices)
 
     def transfer_time_s(self, src: int, dst: int, data_bytes: int) -> float:
-        """Total transfer time in seconds between two devices."""
+        """计算两个设备之间的总传输时间（秒），包含带宽和延迟。"""
         if src == dst:
             return 0.0
         data_mb = data_bytes / (1024 * 1024)

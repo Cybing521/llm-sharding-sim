@@ -1,4 +1,4 @@
-"""User request model for LLM inference."""
+"""LLM 推理的用户请求模型。"""
 
 from dataclasses import dataclass
 import yaml
@@ -7,10 +7,10 @@ import yaml
 @dataclass
 class Request:
     id: str
-    prompt_length: int       # |r_q|
-    output_length: int       # g_q (estimated)
-    arrival_device: int      # which device the request arrives at
-    arrival_time: float      # seconds
+    prompt_length: int       # 提示词长度 |r_q|
+    output_length: int       # 预估输出长度 g_q
+    arrival_device: int      # 请求到达的设备编号
+    arrival_time: float      # 到达时间（秒）
 
     @property
     def total_tokens(self) -> int:

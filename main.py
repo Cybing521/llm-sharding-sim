@@ -1,9 +1,9 @@
-"""Main entry: load config -> solve -> simulate -> visualize.
+"""主入口：加载配置 -> 求解 -> 仿真 -> 可视化。
 
-Usage:
-    python main.py                          # run all experiments
-    python main.py --experiment 1           # run specific experiment
-    python main.py --solver greedy          # single solver
+用法：
+    python main.py                          # 运行所有实验
+    python main.py --experiment 1           # 运行指定实验
+    python main.py --solver greedy          # 仅使用贪心求解器
     python main.py --solver ilp --time-limit 60
 """
 
@@ -36,7 +36,7 @@ from analysis.visualize import (
 
 
 def run_experiment_1(model, cluster, requests, results_dir):
-    """Experiment 1: Single request, ILP vs Greedy."""
+    """实验1：单请求场景，ILP 与贪心算法对比。"""
     print("\n" + "=" * 60)
     print("EXPERIMENT 1: Single request -- ILP vs Greedy")
     print("=" * 60)
@@ -58,7 +58,7 @@ def run_experiment_1(model, cluster, requests, results_dir):
     with open(os.path.join(exp_dir, "report.txt"), "w") as f:
         f.write(report)
 
-    # Simulate both
+    # 分别对两种方案进行仿真
     engine = SimulationEngine(model, cluster, tick_s=0.005)
     sim_results = {}
     for label, result in [("Greedy", greedy_result), ("ILP", ilp_result)]:
@@ -85,7 +85,7 @@ def run_experiment_1(model, cluster, requests, results_dir):
 
 
 def run_experiment_2(model, cluster, requests, results_dir):
-    """Experiment 2: Multi-request concurrent, observe KV Cache pressure."""
+    """实验2：多请求并发场景，观察 KV Cache 内存压力。"""
     print("\n" + "=" * 60)
     print("EXPERIMENT 2: Multi-request concurrent -- KV Cache pressure")
     print("=" * 60)
@@ -123,7 +123,7 @@ def run_experiment_2(model, cluster, requests, results_dir):
 
 
 def run_experiment_3(model, cluster, results_dir):
-    """Experiment 3: Sweep prompt lengths, compare delay."""
+    """实验3：扫描不同 prompt 长度，比较延迟变化。"""
     print("\n" + "=" * 60)
     print("EXPERIMENT 3: Prompt length sweep")
     print("=" * 60)
@@ -183,7 +183,7 @@ def run_experiment_3(model, cluster, results_dir):
 
 
 def run_experiment_4(model, cluster, requests, results_dir):
-    """Experiment 4: Bandwidth sweep, analyze transmission bottleneck."""
+    """实验4：扫描不同带宽倍数，分析传输瓶颈。"""
     print("\n" + "=" * 60)
     print("EXPERIMENT 4: Bandwidth sweep")
     print("=" * 60)
@@ -198,10 +198,10 @@ def run_experiment_4(model, cluster, requests, results_dir):
     sweep_data = {"Greedy": [], "ILP": []}
 
     for factor in bw_factors:
-        # Scale bandwidth
+        # 缩放带宽
         test_cluster = copy.deepcopy(cluster)
         test_cluster.bandwidth_mbps = base_bw * factor
-        # Keep diagonal at 0
+        # 对角线保持为 0（同设备无传输开销）
         np.fill_diagonal(test_cluster.bandwidth_mbps, 0)
 
         bw_label = f"{factor}x"
@@ -234,7 +234,7 @@ def run_experiment_4(model, cluster, requests, results_dir):
         else:
             print(f"  ILP={ir.status}")
 
-    # Plot
+    # 绘图
     fig, ax = plt.subplots(figsize=(10, 6))
     for solver_name, data in sweep_data.items():
         factors = [d["bw_factor"] for d in data]
@@ -261,6 +261,13 @@ def run_experiment_4(model, cluster, requests, results_dir):
 
 
 def main():
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    # 将 plt 设为全局变量，供实验4使用
+    globals()["plt"] = plt
+
     parser = argparse.ArgumentParser(description="LLM Sharding Simulator")
     parser.add_argument("--experiment", type=int, default=0,
                         help="Run specific experiment (1-4), 0 for all")
